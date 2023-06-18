@@ -2,20 +2,12 @@ import { useState ,useEffect} from "react";
 import React  from "react";
 import ModalVideo from 'react-modal-video'
 import LayoutMovies from "../components/Layout";
-import { Row, Col, Image, Skeleton, Button, Carousel  } from "antd";
+import { Row, Col, Image, Skeleton, Button } from "antd";
 import { useParams } from "react-router-dom";
 import {api} from "../services/Api";
 import { helpers } from "../helper";
 // import 'react-modal-video/css/modal-video.min.css';
 import YouTube from 'react-youtube';
-
-const contentStyle = {
-    height: '160px',
-    color: '#fff',
-    lineHeight: '160px',
-    textAlign: 'center',
-    background: '#364d79',
-  };
 
 const DetailMovies = () => {
     const { slug, id } = useParams(); // get params
@@ -112,7 +104,6 @@ const DetailMovies = () => {
                         </Col>
                         <Col span={5}>
                             <h5>Movies Image</h5>
-                            <Carousel autoplay>
                             {
                                 movie['images']['backdrops'].map((item, index) => (
                                     <div key={index} style={{marginBottom:'5px'}}>
@@ -120,8 +111,6 @@ const DetailMovies = () => {
                                     </div>
                                 ))
                             }
-                            </Carousel>
-                          
                         </Col>
                     </Row>
                 </Col>

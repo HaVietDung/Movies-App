@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import LayoutMovies from "../components/Layout";
-import { Row, Col, DatePicker, Skeleton, Carousel } from "antd";
+import { Row, Col, DatePicker, Skeleton } from "antd";
 import { helpers } from "../helper";
 import moment from 'moment';
 import { api } from "../services/Api";
@@ -8,119 +8,121 @@ import ListMovies from "../components/ListMovies";
 import PaginationMovies from "../components/Pagination";
 
 const { RangePicker } = DatePicker;
-const contentStyle = {
-    height: '160px',
-    color: '#fff',
-    lineHeight: '160px',
-    textAlign: 'center',
-    background: '#364d79',
-  };
 let starDate, endDate;
 
 const UpComing = () => {
-    const [loading,setLoading] = useState(false);
+    let date  = new Date();
+    let day   = date.getDate();
+    day       = day < 10 ? `0${day}` : day;
+    let month = date.getMonth()+1;
+    month     = month < 10 ? `0${month}` : month;
+    let year  = date.getFullYear();
+    let currentDate = `${year}-${month}-${day}`;
+    let nextDay   = moment(currentDate,"YYYY-MM-DD").add(1,'days').format("YYYY-MM-DD");
+    let nextMonth = moment(currentDate,"YYYY-MM-DD").add(7,'days').format("YYYY-MM-DD");
+
+
+    const [loading, setLoading] = useState(false);
     const [dataMovies, setDataMovies] = useState([]);
-    const [error, setError] = useState(null);
+    const [errors, setErrors] = useState(null);
     const [page, setPage] = useState(1);
-    const [totalPage, setTotalPage] = useState(0)
+    const [totalPage, setTotalPage] = useState(0);
     const [totalResult, setTotalResult] = useState(0);
-    const [sDate, setStartDate] = useState(null);
-    const [eDate, setEndDate] = useState(null);
+    const [sDate, setStartDate] = useState(nextDay);
+    const [eDate,setEndDate]    = useState(nextMonth);
 
-    const changePageMovies = (p) => {
-        if(p >= 1 && p <= totalPage){
-            //p la so trang nguoi dung nhap tren giao dien
-            setPage(p)
-            const stringDate = [sDate,eDate]
-            changeDate(null, stringDate)
-        }
-    }
 
-    const changeDate = async (date, dateString) => {
-        setLoading(true)
-        const [starDate, endDate] = dateString;
-        setStartDate(starDate);
-        setEndDate(endDate);
-        const data = await api.getDataMoviesByDate(starDate, endDate, page);
-        if(!helpers.isEmptyObject(data)){
-            //co data
-            setDataMovies(data['results'])
-            if(page === 1){
+    useEffect(() => {
+        const getData = async () => {
+            setLoading(true);
+            const data = await api.getDataMoviesByDate(sDate, eDate, page);
+            if(!helpers.isEmptyObject(data)){
+                // co data
+                setDataMovies(data['results']);
                 setTotalPage(data['total_pages']);
                 setTotalResult(data['total_results']);
+                setErrors(null);
+            } else {
+                // khong co data
+                setErrors({code: 404,mess: 'Not found data'});
             }
-            setError(null)
-        } else {
-            setError({
-                cod: '404',
-                mess:'not found data'
-            })
+            setLoading(false);
         }
-        setLoading(false)
+        getData();
+    }, [sDate, eDate, page])
+
+    const changeDate = async (date, dateString) => {
+        const [startDate, endDate] = dateString;
+        // cap nhat lai start date va end date
+        // useEffect tu dong chay lai
+        setStartDate(startDate); // sDate
+        setEndDate(endDate); // eDate
     }
-    if(loading){
-        return(
+
+    const changePageMovies = (p) => {
+        if( p >= 1 && p <= totalPage){
+            // cap nhat lai state page
+            // p : so trang ma nguoi dung bam o giao dien
+            setPage(p);
+            // state page thay doi thi useEffect chay lai
+        }
+    }
+
+    if(errors !== null){
+        return (
             <LayoutMovies
-                level1 = "Trang chu"
-                level2 = "Danh sach"
-                level3 = "Phim sap ra rap"
+                level1="Trang chu"
+                level2="Danh sach"
+                level3="Phim sap ra rap"
             >
                 <Row>
                     <Col span={24}>
-                        <Skeleton active/>
+                        <h3>{errors.mess}</h3>
                     </Col>
                 </Row>
             </LayoutMovies>
         )
     }
-    if(error !== null){
-        return(
-            <LayoutMovies
-                level1 = "Trang chu"
-                level2 = "Danh sach"
-                level3 = "Phim sap ra rap"
-            >
-                <Row>
-                    <Col span={24}>
-                        <h4>{error.mess}</h4>
-                    </Col>
-                </Row>
-            </LayoutMovies>
-        )
-    }
-    return(
+
+    return (
         <LayoutMovies
-                level1 = "Trang chu"
-                level2 = "Danh sach"
-                level3 = "Phim sap ra rap"
+            level1="Trang chu"
+            level2="Danh sach"
+            level3="Phim sap ra rap"
         >
             <Row>
                 <Col span={24}>
-                    <h4>Phim sap chieu</h4>
+                    <h4> Phim sap trinh chieu</h4>
                     <Row>
                         <Col span={24}>
                             <RangePicker
-                                    defaultValue={moment()}
-                                    format={"YYYY-MM-DD"}
-                                    disabledDate={current => {
+                                format={"YYYY-MM-DD"}
+                                disabledDate={current => {
                                     return current && current < moment().endOf('day');
-                                    }}
-                                    onChange={(d, dt) => changeDate(d, dt)}
+                                }}
+                                onChange={(d, dt) => changeDate(d ,dt)}
                             />
-                            <ListMovies
-                                movies={dataMovies}
-                            />
-                            {
-                                dataMovies.length > 0 
-                                &&  
-                                <PaginationMovies
-                                    current={page}
-                                    total={totalResult}
-                                    changePage={changePageMovies}
-                                />
-                            }
+                            <br/><br/>
+                            { loading ? (
+                                <Skeleton active />
+                            ) : (
+                                <>
+                                    <ListMovies
+                                        movies={dataMovies}
+                                    />
+                                    {
+                                        dataMovies.length > 0 
+                                        &&
+                                        <PaginationMovies
+                                            current={page}
+                                            total={totalResult}
+                                            changePage={changePageMovies}
+                                        />
+                                    }
+                                </>
+                            )}
                         </Col>
-                    </Row>  
+                    </Row>
                 </Col>
             </Row>
         </LayoutMovies>

@@ -11,7 +11,7 @@ const ContentMovies = ({ children, level1, level2, level3}) => {
             style={{
             padding: '0 50px',
             minHeight: "100vh",
-            padding: "15px"
+            padding: "15px",
             }}
         >
             <BreadcrumbMovies
